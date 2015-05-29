@@ -4,7 +4,7 @@ require 'uri'
 
 # From the original: https://github.com/libin/rack-smart-app-banner
 # MIT Licensed
-module EuCookieLawMiddleware
+class EuCookieLawMiddleware
   def initialize(app, options = {})
     @app, @options = app, options
     @reload_code = options.fetch(:reload_code, false)

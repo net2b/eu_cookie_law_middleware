@@ -1,3 +1,3 @@
-module EuCookieLawMiddleware
+class EuCookieLawMiddleware
   VERSION = "0.1.0"
 end
