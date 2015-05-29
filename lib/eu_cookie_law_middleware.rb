@@ -19,7 +19,7 @@ class EuCookieLawMiddleware
   end
 
   def call(env)
-    return @app.call(env) if env['rack.request.cookie_hash'].has_key?(cookie_name)
+    return @app.call(env) if (env['rack.request.cookie_hash'] || {}).has_key?(cookie_name)
 
     status, headers, body = @app.call(env)
     return [status, headers, body] if !(html?(headers)) or status != 200
