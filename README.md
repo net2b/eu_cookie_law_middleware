@@ -9,7 +9,7 @@ TODO: Delete this and the text above, and describe your gem
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'eu_cookie_law_middleware'
+gem 'eu_cookie_law_middleware', github: 'net2b/eu_cookie_law_middleware'
 ```
 
 And then execute:
@@ -22,7 +22,37 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Rails
+
+In your `config/application.rb`:
+
+```ruby
+config.middleware.use EuCookieLawMiddleware
+
+# or by passing some options:
+
+config.middleware.use EuCookieLawMiddleware, {
+  template_path: "#{__dir__}/eu_cookie_law_template.erb", # customize the html/behavior
+  reload_code: Rails.env.development?,                    # reload the template in development
+}
+```
+
+### Rack
+
+In your `config.ru`:
+
+```ruby
+use EuCookieLawMiddleware
+
+# or by passing some options:
+
+use EuCookieLawMiddleware, {
+  template_path: "#{__dir__}/eu_cookie_law_template.erb", # customize the html/behavior
+  reload_code: Rails.env.development?,                    # reload the template in development
+}
+```
+
+
 
 ## Development
 
