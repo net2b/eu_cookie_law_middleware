@@ -1,3 +1,4 @@
+require 'rack'
 require 'eu_cookie_law_middleware/version'
 require 'erb'
 require 'uri'
@@ -19,12 +20,13 @@ class EuCookieLawMiddleware
   end
 
   def call(env)
-    return @app.call(env) if (env['rack.request.cookie_hash'] || {}).has_key?(cookie_name)
+    original_response = @app.call(env)
+    status, headers, body  = original_response
 
-    status, headers, body = @app.call(env)
-    return [status, headers, body] if !(html?(headers)) or status != 200
+    if status != 200 or not_html?(headers) or has_dismissed?(env)
+      return original_response
+    end
 
-    request = Rack::Request.new(env)
     response = Rack::Response.new([], status, headers)
     code = get_code
 
@@ -35,9 +37,15 @@ class EuCookieLawMiddleware
     response.finish
   end
 
+
   private
 
-  def html?(headers)
+  def has_dismissed?(env)
+    request = Rack::Request.new(env)
+    request.cookies.has_key?(cookie_name)
+  end
+
+  def not_html?(headers)
     headers["Content-Type"] =~ /html/
   end
 
