@@ -10,7 +10,7 @@ class EuCookieLawMiddleware
     @app, @options = app, options
     @reload_code = options.fetch(:reload_code, false)
     @template_proc = extract_template_proc(options)
-    get_code # warmup
+    @code = generate_html unless @reload_code
   end
 
   def cookie_name
@@ -26,7 +26,7 @@ class EuCookieLawMiddleware
     end
 
     response = Rack::Response.new([], status, headers)
-    code = get_code
+    code = @code || generate_html(env: env)
 
     body = [body] if String === body
     body.each { |fragment| response.write inject_code(code, fragment) }
@@ -37,6 +37,10 @@ class EuCookieLawMiddleware
 
 
   private
+
+  def generate_html(env: {}, binding: binding)
+    ERB.new(@template_proc.call(env)).result(binding)
+  end
 
   def has_dismissed?(env)
     request = Rack::Request.new(env)
@@ -58,11 +62,6 @@ class EuCookieLawMiddleware
 
   def not_html?(headers)
     headers["Content-Type"] =~ /html/
-  end
-
-  def get_code
-    @@code = nil if @reload_code
-    @@code ||= ERB.new(@template_proc.call).result(binding)
   end
 
   def js_cookie_code
