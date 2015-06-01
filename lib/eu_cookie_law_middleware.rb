@@ -39,7 +39,11 @@ class EuCookieLawMiddleware
 
   private
 
-  def generate_html(env = {})
+  class FakeEnv < StandardError
+  end
+
+  def generate_html(env = nil)
+    env ||= Hash.new { |h,k| raise FakeEnv, "This is not a real env, use `reload_code: true` to have the real request env." }
     ERB.new(@template_proc.call(env)).result(binding)
   end
 
