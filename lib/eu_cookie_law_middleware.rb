@@ -9,9 +9,7 @@ class EuCookieLawMiddleware
   def initialize(app, options = {})
     @app, @options = app, options
     @reload_code = options.fetch(:reload_code, false)
-    @template = Pathname(options.fetch(:template_path) {
-      File.join(__dir__, 'eu_cookie_law_middleware', 'template.erb')
-    })
+    @template_proc = extract_template_proc(options)
     get_code # warmup
   end
 
@@ -45,13 +43,26 @@ class EuCookieLawMiddleware
     request.cookies.has_key?(cookie_name)
   end
 
+  def extract_template_proc(options)
+    options.fetch(:template_proc) do
+      default_path = File.join(__dir__, 'eu_cookie_law_middleware', 'template.erb')
+      pathname = Pathname(options.fetch(:template_path, default_path))
+      if @reload_code
+        contents = pathname.read
+        -> { contents }
+      else
+        -> { pathname.read }
+      end
+    end
+  end
+
   def not_html?(headers)
     headers["Content-Type"] =~ /html/
   end
 
   def get_code
     @@code = nil if @reload_code
-    @@code ||= ERB.new(@template.read).result(binding)
+    @@code ||= ERB.new(@template_proc.call).result(binding)
   end
 
   def js_cookie_code
