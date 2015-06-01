@@ -38,7 +38,7 @@ class EuCookieLawMiddleware
 
   private
 
-  def generate_html(env: {}, binding: binding)
+  def generate_html(env: {})
     ERB.new(@template_proc.call(env)).result(binding)
   end
 
