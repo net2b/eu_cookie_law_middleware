@@ -10,6 +10,7 @@ class EuCookieLawMiddleware
     @app, @options = app, options
     @reload_code = options.fetch(:reload_code, false)
     @template_proc = extract_template_proc(options)
+    raise ArgumentError, 'proc should take 1 "env" arg' unless @template_proc.arity == 1
     @code = generate_html unless @reload_code
   end
 
@@ -38,7 +39,7 @@ class EuCookieLawMiddleware
 
   private
 
-  def generate_html(env: {})
+  def generate_html(env = {})
     ERB.new(@template_proc.call(env)).result(binding)
   end
 
@@ -48,20 +49,29 @@ class EuCookieLawMiddleware
   end
 
   def extract_template_proc(options)
-    options.fetch(:template_proc) do
-      default_path = File.join(__dir__, 'eu_cookie_law_middleware', 'template.erb')
-      pathname = Pathname(options.fetch(:template_path, default_path))
+    template_proc = options[:template_proc]
+    template_path = options[:template_path]
+    default_path = File.join(__dir__, 'eu_cookie_law_middleware', 'template.erb')
+    to_proc = -> path {
+      pathname = Pathname(path)
+
       if @reload_code
-        contents = pathname.read
-        -> { contents }
+        content = pathname.read
+        -> env { content }
       else
-        -> { pathname.read }
+        -> env { pathname.read }
       end
+    }
+
+    case
+    when template_proc then template_proc
+    when template_path then to_proc[template_path]
+    else to_proc[default_path]
     end
   end
 
   def not_html?(headers)
-    headers["Content-Type"] =~ /html/
+    headers["Content-Type"] !~ /html/
   end
 
   def js_cookie_code
