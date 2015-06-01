@@ -27,7 +27,7 @@ class EuCookieLawMiddleware
     end
 
     response = Rack::Response.new([], status, headers)
-    code = @code || generate_html(env: env)
+    code = @code || generate_html(env)
 
     body = [body] if String === body
     body.each { |fragment| response.write inject_code(code, fragment) }
